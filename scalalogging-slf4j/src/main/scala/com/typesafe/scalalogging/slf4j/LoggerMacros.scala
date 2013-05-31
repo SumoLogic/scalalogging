@@ -18,6 +18,7 @@ package com.typesafe.scalalogging.slf4j
 
 import org.slf4j.Marker
 import scala.reflect.macros.Context
+import scala.language.existentials
 
 private object LoggerMacros {
 
@@ -27,10 +28,43 @@ private object LoggerMacros {
     import c.universe._
     private val underlying = Select(c.prefix.tree, newTermName("underlying"))
     private val isEnabled = Select(underlying, newTermName(s"is${level.head.toUpper +: level.tail}Enabled"))
-    private val logger = Select(underlying, newTermName(level))
+    private def logger = Select(underlying, newTermName(level))
 
     private def logArgs(args: List[c.universe.Tree]): c.Expr[Unit] = {
-      c.Expr(If(isEnabled, Apply(logger, args), EmptyTree))
+      val fallbackMessage = Apply(
+        Select(
+          Apply(
+            Select(Ident(c.mirror.staticModule("scala.StringContext")), newTermName("apply")),
+            List(
+              Literal(Constant("Couldn't generate message, because ")),
+              Literal(Constant(" thrown: '")),
+              Literal(Constant("'"))
+            )
+          ),
+          newTermName("s")
+        ),
+        List(
+          Apply(Select(Apply(Select(Ident(newTermName("e")), newTermName("getClass")), List()), newTermName("getName")), List()),
+          Apply(Select(Ident(newTermName("e")), newTermName("getMessage")), List())
+        )
+      )
+
+      val fallback = Apply(logger, List(fallbackMessage))
+
+      val safeLog = Try(
+        Apply(logger, args),
+        List(CaseDef(
+          Bind(
+            newTermName("e"),
+            Typed(Ident(nme.WILDCARD), Select(Ident(c.mirror.staticModule("scala.package")), newTypeName("Exception")))
+          ),
+          EmptyTree,
+          fallback
+        )),
+
+        EmptyTree
+      )
+      c.Expr(If(isEnabled, safeLog, EmptyTree))
     }
 
     def logMessage(message: c.Expr[String]) = {
@@ -61,7 +95,6 @@ private object LoggerMacros {
     def logMarkerMessageThrowable(marker: c.Expr[Marker], message: c.Expr[String], t: c.Expr[Throwable]) = {
       logArgs(List(marker.tree, message.tree, t.tree))
     }
-
   }
 
   // Error

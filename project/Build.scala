@@ -71,6 +71,7 @@ object Build extends Build {
       organization := "com.typesafe",
       scalaVersion := ScalaVersion,
       scalacOptions ++= Seq(
+        "-feature",
         "-unchecked",
         "-deprecation",
         "-Xlint",

@@ -16,11 +16,12 @@
 
 package com.typesafe.scalalogging.slf4j
 
-import org.slf4j.{ Logger => Underlying, MarkerFactory }
+import org.slf4j.{ Logger => Underlying, Marker, MarkerFactory }
 import org.specs2.mock.Mockito
+import org.specs2.mock.mockito.MockitoMatchers
 import org.specs2.mutable.Specification
 
-object Slf4jLoggerSpec extends Specification with Mockito {
+object Slf4jLoggerSpec extends Specification with Mockito with MockitoMatchers {
 
   private val Message = "String message!"
 
@@ -31,6 +32,14 @@ object Slf4jLoggerSpec extends Specification with Mockito {
   private val Marker = MarkerFactory getMarker "Marker"
 
   private val Params = List("1", "2", new java.util.Date(3))
+
+  private def throwMessage: String = throw Throwable
+
+  private def throwThrowable: Throwable = throw Throwable
+
+  private def throwParams = List("1", "2", throwMessage)
+
+  private def throwMarker: Marker = throw Throwable
 
   "Calling error" should {
     "not call the underlying logger if level not enabled" in {
@@ -66,6 +75,19 @@ object Slf4jLoggerSpec extends Specification with Mockito {
       there was one(underlying).error(Marker, Message, Params: _*)
       logger.error(Marker, Message, Throwable)
       there was one(underlying).error(Marker, Message, Throwable)
+    }
+    "survive the exception" in {
+      val underlying = mock[Underlying]
+      underlying.isErrorEnabled returns true
+      val logger = Logger(underlying)
+      logger.error(throwMessage)
+      logger.error(Message, "1", throwMessage, new java.util.Date(3))
+      logger.error(Message, throwThrowable)
+      logger.error(throwMarker, Message)
+      logger.error(Marker, Message, throwParams: _*)
+      logger.error(throwMarker, Message, Throwable)
+      there was atMost(6)(underlying).error(anyString)
+      there was atLeast(6)(underlying).error(anyString)
     }
   }
 
@@ -104,6 +126,19 @@ object Slf4jLoggerSpec extends Specification with Mockito {
       logger.warn(Marker, Message, Throwable)
       there was one(underlying).warn(Marker, Message, Throwable)
     }
+    "survive the exception" in {
+      val underlying = mock[Underlying]
+      underlying.isWarnEnabled returns true
+      val logger = Logger(underlying)
+      logger.warn(throwMessage)
+      logger.warn(Message, "1", throwMessage, new java.util.Date(3))
+      logger.warn(Message, throwThrowable)
+      logger.warn(throwMarker, Message)
+      logger.warn(Marker, Message, throwParams: _*)
+      logger.warn(throwMarker, Message, Throwable)
+      there was atMost(6)(underlying).warn(anyString)
+      there was atLeast(6)(underlying).warn(anyString)
+    }
   }
 
   "Calling info" should {
@@ -140,6 +175,19 @@ object Slf4jLoggerSpec extends Specification with Mockito {
       there was one(underlying).info(Marker, Message, Params: _*)
       logger.info(Marker, Message, Throwable)
       there was one(underlying).info(Marker, Message, Throwable)
+    }
+    "survive the exception" in {
+      val underlying = mock[Underlying]
+      underlying.isInfoEnabled returns true
+      val logger = Logger(underlying)
+      logger.info(throwMessage)
+      logger.info(Message, "1", throwMessage, new java.util.Date(3))
+      logger.info(Message, throwThrowable)
+      logger.info(throwMarker, Message)
+      logger.info(Marker, Message, throwParams: _*)
+      logger.info(throwMarker, Message, Throwable)
+      there was atMost(6)(underlying).info(anyString)
+      there was atLeast(6)(underlying).info(anyString)
     }
   }
 
@@ -178,6 +226,19 @@ object Slf4jLoggerSpec extends Specification with Mockito {
       logger.debug(Marker, Message, Throwable)
       there was one(underlying).debug(Marker, Message, Throwable)
     }
+    "survive the exception" in {
+      val underlying = mock[Underlying]
+      underlying.isDebugEnabled returns true
+      val logger = Logger(underlying)
+      logger.debug(throwMessage)
+      logger.debug(Message, "1", throwMessage, new java.util.Date(3))
+      logger.debug(Message, throwThrowable)
+      logger.debug(throwMarker, Message)
+      logger.debug(Marker, Message, throwParams: _*)
+      logger.debug(throwMarker, Message, Throwable)
+      there was atMost(6)(underlying).debug(anyString)
+      there was atLeast(6)(underlying).debug(anyString)
+    }
   }
 
   "Calling trace" should {
@@ -214,6 +275,19 @@ object Slf4jLoggerSpec extends Specification with Mockito {
       there was one(underlying).trace(Marker, Message, Params: _*)
       logger.trace(Marker, Message, Throwable)
       there was one(underlying).trace(Marker, Message, Throwable)
+    }
+    "survive the exception" in {
+      val underlying = mock[Underlying]
+      underlying.isTraceEnabled returns true
+      val logger = Logger(underlying)
+      logger.trace(throwMessage)
+      logger.trace(Message, "1", throwMessage, new java.util.Date(3))
+      logger.trace(Message, throwThrowable)
+      logger.trace(throwMarker, Message)
+      logger.trace(Marker, Message, throwParams: _*)
+      logger.trace(throwMarker, Message, Throwable)
+      there was atMost(6)(underlying).trace(anyString)
+      there was atLeast(6)(underlying).trace(anyString)
     }
   }
 }
