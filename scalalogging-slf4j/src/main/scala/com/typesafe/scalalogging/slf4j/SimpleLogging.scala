@@ -7,6 +7,8 @@ import language.experimental.macros
 trait SimpleLogging {
   lazy val underlying = LoggerFactory getLogger getClass.getName
 
+  def addLoggingContext(message: String, callerPosition: String, callerLocation: String): String = message
+
   // Error
 
   def error(message: String): Unit = macro LoggerMacros.errorMessage
@@ -46,4 +48,10 @@ trait SimpleLogging {
   def trace(message: String, params: AnyRef*): Unit = macro LoggerMacros.traceMessageParams
 
   def trace(message: String, t: Throwable): Unit = macro LoggerMacros.traceMessageThrowable
+}
+
+trait SimpleRichLogging extends SimpleLogging {
+  override def addLoggingContext(message: String, callerPosition: String, callerLocation: String): String = {
+    s"[pos=$callerPosition $callerLocation] $message"
+  }
 }

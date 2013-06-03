@@ -30,8 +30,30 @@ private object LoggerMacros {
     private val isEnabled = Select(underlying, newTermName(s"is${level.head.toUpper +: level.tail}Enabled"))
     private def logger = Select(underlying, newTermName(level))
 
-    private def logArgs(args: List[c.universe.Tree]): c.Expr[Unit] = {
-      val fallbackMessage = Apply(
+    private def prependContext(message: c.Expr[String]): c.universe.Tree = {
+      val fileName = c.enclosingUnit.source.file.name
+      val lineNum = c.enclosingPosition.line
+
+      val className = c.enclosingClass match {
+        case ClassDef(_, name, _, _) => name
+        case ModuleDef(_, name, _) => name
+        case _ => "(unknown)"
+      }
+      val methodName = c.enclosingMethod match {
+        case DefDef(_, name, _, _, _, _) => name
+        case _ => "$init"
+      }
+      val callerPosition = Literal(Constant(s"$className.$methodName(...)"))
+      val callerLocation = Literal(Constant(s"$fileName:$lineNum"))
+
+      Apply(
+        Select(c.prefix.tree, newTermName("addLoggingContext")),
+        List(message.tree, callerPosition, callerLocation)
+      )
+    }
+
+    private def fallbackMessage: c.universe.Tree = {
+      Apply(
         Select(
           Apply(
             Select(Ident(c.mirror.staticModule("scala.StringContext")), newTermName("apply")),
@@ -48,9 +70,9 @@ private object LoggerMacros {
           Apply(Select(Ident(newTermName("e")), newTermName("getMessage")), List())
         )
       )
+    }
 
-      val fallback = Apply(logger, List(fallbackMessage))
-
+    private def logArgs(args: List[c.universe.Tree]): c.Expr[Unit] = {
       val safeLog = Try(
         Apply(logger, args),
         List(CaseDef(
@@ -59,7 +81,7 @@ private object LoggerMacros {
             Typed(Ident(nme.WILDCARD), Select(Ident(c.mirror.staticModule("scala.package")), newTypeName("Exception")))
           ),
           EmptyTree,
-          fallback
+          Apply(logger, List(fallbackMessage))
         )),
 
         EmptyTree
@@ -68,7 +90,7 @@ private object LoggerMacros {
     }
 
     def logMessage(message: c.Expr[String]) = {
-      logArgs(List(message.tree))
+      logArgs(List(prependContext(message)))
     }
 
     def logMessageParams(message: c.Expr[String],
@@ -81,19 +103,19 @@ private object LoggerMacros {
         ),
         Ident(tpnme.WILDCARD_STAR)
       )
-      logArgs(marker.foldRight(message.tree +: List(paramsWildcard))(_.tree +: _))
+      logArgs(marker.foldRight(prependContext(message) +: List(paramsWildcard))(_.tree +: _))
     }
 
     def logMessageThrowable(message: c.Expr[String], t: c.Expr[Throwable]) = {
-      logArgs(List(message.tree, t.tree))
+      logArgs(List(prependContext(message), t.tree))
     }
 
     def logMarkerMessage(marker: c.Expr[Marker], message: c.Expr[String]) = {
-      logArgs(List(marker.tree, message.tree))
+      logArgs(List(marker.tree, prependContext(message)))
     }
 
     def logMarkerMessageThrowable(marker: c.Expr[Marker], message: c.Expr[String], t: c.Expr[Throwable]) = {
-      logArgs(List(marker.tree, message.tree, t.tree))
+      logArgs(List(marker.tree, prependContext(message), t.tree))
     }
   }
 
