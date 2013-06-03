@@ -1,6 +1,6 @@
 package com.typesafe.scalalogging.slf4j
 
-import org.slf4j.{ Marker, LoggerFactory }
+import org.slf4j.LoggerFactory
 import scala.Predef._
 import language.experimental.macros
 
@@ -15,12 +15,6 @@ trait SimpleLogging {
 
   def error(message: String, t: Throwable): Unit = macro LoggerMacros.errorMessageThrowable
 
-  def error(marker: Marker, message: String): Unit = macro LoggerMacros.errorMarkerMessage
-
-  def error(marker: Marker, message: String, params: AnyRef*): Unit = macro LoggerMacros.errorMarkerMessageParams
-
-  def error(marker: Marker, message: String, t: Throwable): Unit = macro LoggerMacros.errorMarkerMessageThrowable
-
   // Warn
 
   def warn(message: String): Unit = macro LoggerMacros.warnMessage
@@ -28,12 +22,6 @@ trait SimpleLogging {
   def warn(message: String, params: AnyRef*): Unit = macro LoggerMacros.warnMessageParams
 
   def warn(message: String, t: Throwable): Unit = macro LoggerMacros.warnMessageThrowable
-
-  def warn(marker: Marker, message: String): Unit = macro LoggerMacros.warnMarkerMessage
-
-  def warn(marker: Marker, message: String, params: AnyRef*): Unit = macro LoggerMacros.warnMarkerMessageParams
-
-  def warn(marker: Marker, message: String, t: Throwable): Unit = macro LoggerMacros.warnMarkerMessageThrowable
 
   // Info
 
@@ -43,12 +31,6 @@ trait SimpleLogging {
 
   def info(message: String, t: Throwable): Unit = macro LoggerMacros.infoMessageThrowable
 
-  def info(marker: Marker, message: String): Unit = macro LoggerMacros.infoMarkerMessage
-
-  def info(marker: Marker, message: String, params: AnyRef*): Unit = macro LoggerMacros.infoMarkerMessageParams
-
-  def info(marker: Marker, message: String, t: Throwable): Unit = macro LoggerMacros.infoMarkerMessageThrowable
-
   // Debug
 
   def debug(message: String): Unit = macro LoggerMacros.debugMessage
@@ -57,12 +39,6 @@ trait SimpleLogging {
 
   def debug(message: String, t: Throwable): Unit = macro LoggerMacros.debugMessageThrowable
 
-  def debug(marker: Marker, message: String): Unit = macro LoggerMacros.debugMarkerMessage
-
-  def debug(marker: Marker, message: String, params: AnyRef*): Unit = macro LoggerMacros.debugMarkerMessageParams
-
-  def debug(marker: Marker, message: String, t: Throwable): Unit = macro LoggerMacros.debugMarkerMessageThrowable
-
   // Trace
 
   def trace(message: String): Unit = macro LoggerMacros.traceMessage
@@ -70,10 +46,4 @@ trait SimpleLogging {
   def trace(message: String, params: AnyRef*): Unit = macro LoggerMacros.traceMessageParams
 
   def trace(message: String, t: Throwable): Unit = macro LoggerMacros.traceMessageThrowable
-
-  def trace(marker: Marker, message: String): Unit = macro LoggerMacros.traceMarkerMessage
-
-  def trace(marker: Marker, message: String, params: AnyRef*): Unit = macro LoggerMacros.traceMarkerMessageParams
-
-  def trace(marker: Marker, message: String, t: Throwable): Unit = macro LoggerMacros.traceMarkerMessageThrowable
 }
